@@ -902,14 +902,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// соседних status-item icons. Здесь emoji сначала растеризуется в квадратный canvas,
     /// центрируется внутри него и затем передаётся AppKit как обычный NSImage.
     ///
-    /// flagSize — размер canvas. Сам emoji рисуем на 2 pt меньше, чтобы при 18 pt
-    /// оставался типичный для Sequoia воздушный отступ сверху/снизу.
+    /// flagSize — размер canvas. Сам emoji рисуем на 3 pt меньше, чтобы при 18 pt
+    /// визуальная масса совпадала с соседними SF Symbols / template icons в Sequoia.
     private func flagImage(for flag: String, size: CGFloat) -> NSImage {
         let canvas = max(14, min(size, 20))
         let cacheKey = "\(flag)|\(Int(canvas.rounded()))"
         if let cached = flagImageCache[cacheKey] { return cached }
 
-        let fontSize = max(11, canvas - 2)
+        let fontSize = max(10, canvas - 3)
         let font = NSFont(name: "Apple Color Emoji", size: fontSize)
             ?? NSFont.systemFont(ofSize: fontSize)
         let attributes: [NSAttributedString.Key: Any] = [.font: font]
@@ -917,7 +917,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         let measured = attributed.boundingRect(
             with: NSSize(width: 64, height: 64),
-            options: [.usesLineFragmentOrigin, .usesFontLeading]
+            options: [.usesDeviceMetrics]
         ).integral
 
         let image = NSImage(size: NSSize(width: canvas, height: canvas), flipped: false) { rect in
