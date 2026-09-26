@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let secureNotice = SecureInputNotice()  // issue #27: подсказка о защ. вводе без кражи фокуса
     private var lastFlagShown: String?            // идентичность раскладки для детекта смены (не title!)
     private var badgeCache: [String: NSImage] = [:]  // монохромные плашки, чтобы не перерисовывать 2с-опросом
+    private let flagSizeOptions: [Double] = [14, 16, 18, 20]
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
@@ -711,6 +712,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         monoIconItem.state = SettingsManager.shared.monochromeIcon ? .on : .off
         menu.addItem(monoIconItem)
 
+        // Размер цветного флага в строке меню. Значение сохраняется между запусками.
+        let flagSizeItem = NSMenuItem(title: L10n.menuFlagSize, action: nil, keyEquivalent: "")
+        let flagSizeMenu = NSMenu()
+        for size in flagSizeOptions {
+            let item = NSMenuItem(title: "\(Int(size)) pt", action: #selector(setFlagSize(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = NSNumber(value: size)
+            item.state = abs(SettingsManager.shared.flagSize - size) < 0.01 ? .on : .off
+            flagSizeMenu.addItem(item)
+        }
+        flagSizeItem.submenu = flagSizeMenu
+        flagSizeItem.isEnabled = !SettingsManager.shared.monochromeIcon
+        menu.addItem(flagSizeItem)
+
         // Режим удалённого стола отложен в 2.5 — тумблер скрыт за флагом (для тестирования).
         if SettingsManager.shared.showRemoteDesktopBeta {
             let remoteDesktopItem = NSMenuItem(title: L10n.menuRemoteDesktop, action: #selector(toggleRemoteDesktop), keyEquivalent: "")
@@ -825,6 +840,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             statusItem.button?.image = badgeImage(for: currentBadgeLabel())
         } else {
             statusItem.button?.image = nil
+            statusItem.button?.font = NSFont.systemFont(ofSize: CGFloat(SettingsManager.shared.flagSize))
             statusItem.button?.title = flag
         }
         if changed { caretIndicator?.layoutChanged() }
@@ -945,6 +961,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         SettingsManager.shared.monochromeIcon.toggle()
         sender.state = SettingsManager.shared.monochromeIcon ? .on : .off
         updateStatusIcon()   // перерисовать в новом стиле сразу
+    }
+
+    @objc private func setFlagSize(_ sender: NSMenuItem) {
+        guard let value = sender.representedObject as? NSNumber else { return }
+        SettingsManager.shared.flagSize = value.doubleValue
+        updateStatusIcon()
+        rebuildMenu()
     }
 
     @objc private func toggleRemoteDesktop(_ sender: NSMenuItem) {
