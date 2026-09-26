@@ -44,6 +44,7 @@ final class SettingsManager: @unchecked Sendable {
         static let caretFlag = "com.ruswitcher.caretFlag"
         static let secureInputNotice = "com.ruswitcher.secureInputNotice"
         static let monochromeIcon = "com.ruswitcher.monochromeIcon"
+        static let flagSize = "com.ruswitcher.flagSize"
         static let deniedAppsAdded = "com.ruswitcher.deniedAppsAdded"
         static let deniedAppsRemoved = "com.ruswitcher.deniedAppsRemoved"
         static let deniedWords = "com.ruswitcher.deniedWords"
@@ -291,6 +292,15 @@ final class SettingsManager: @unchecked Sendable {
     var monochromeIcon: Bool {
         get { defaults.bool(forKey: Keys.monochromeIcon) }
         set { defaults.set(newValue, forKey: Keys.monochromeIcon) }
+    }
+
+    /// Размер цветного флага в строке меню (pt). Для форка чуть крупнее штатного: 18 pt.
+    var flagSize: Double {
+        get {
+            let value = (defaults.object(forKey: Keys.flagSize) as? NSNumber)?.doubleValue ?? 18
+            return min(max(value, 14), 20)
+        }
+        set { defaults.set(min(max(newValue, 14), 20), forKey: Keys.flagSize) }
     }
 
     /// Приложения, где авто-конверсия выключена. Эффективный список = дефолты минус
