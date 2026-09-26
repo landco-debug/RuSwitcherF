@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let secureNotice = SecureInputNotice()  // issue #27: подсказка о защ. вводе без кражи фокуса
     private var lastFlagShown: String?            // идентичность раскладки для детекта смены (не title!)
     private var badgeCache: [String: NSImage] = [:]  // монохромные плашки, чтобы не перерисовывать 2с-опросом
+    private var flagImageCache: [String: NSImage] = [:] // цветные флаги: уже отцентрованы как status-item images
     private let flagSizeOptions: [Double] = [14, 16, 18, 20]
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -837,11 +838,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         lastFlagShown = flag
         if SettingsManager.shared.monochromeIcon {
             statusItem.button?.title = ""
+            statusItem.button?.imagePosition = .imageOnly
+            statusItem.button?.imageScaling = .scaleNone
             statusItem.button?.image = badgeImage(for: currentBadgeLabel())
         } else {
-            statusItem.button?.image = nil
-            statusItem.button?.font = NSFont.systemFont(ofSize: CGFloat(SettingsManager.shared.flagSize))
-            statusItem.button?.title = flag
+            // Цветной флаг — именно NSImage, а не emoji в title. Это убирает текстовую
+            // baseline-геометрию и даёт такое же оптическое центрирование, как у обычных
+            // menu-bar icons в macOS Sequoia.
+            statusItem.button?.title = ""
+            statusItem.button?.imagePosition = .imageOnly
+            statusItem.button?.imageScaling = .scaleNone
+            statusItem.button?.image = flagImage(for: flag, size: CGFloat(SettingsManager.shared.flagSize))
         }
         if changed { caretIndicator?.layoutChanged() }
     }
@@ -885,6 +892,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         image.isTemplate = true
         badgeCache[label] = image
+        return image
+    }
+
+    /// Цветной флаг для строки меню.
+    ///
+    /// Важно: emoji не ставится в NSStatusBarButton.title. Текст в title выравнивается
+    /// по baseline, из-за чего большой цветной флаг визуально «прыгает» относительно
+    /// соседних status-item icons. Здесь emoji сначала растеризуется в квадратный canvas,
+    /// центрируется внутри него и затем передаётся AppKit как обычный NSImage.
+    ///
+    /// flagSize — размер canvas. Сам emoji рисуем на 2 pt меньше, чтобы при 18 pt
+    /// оставался типичный для Sequoia воздушный отступ сверху/снизу.
+    private func flagImage(for flag: String, size: CGFloat) -> NSImage {
+        let canvas = max(14, min(size, 20))
+        let cacheKey = "\(flag)|\(Int(canvas.rounded()))"
+        if let cached = flagImageCache[cacheKey] { return cached }
+
+        let fontSize = max(11, canvas - 2)
+        let font = NSFont(name: "Apple Color Emoji", size: fontSize)
+            ?? NSFont.systemFont(ofSize: fontSize)
+        let attributes: [NSAttributedString.Key: Any] = [.font: font]
+        let attributed = NSAttributedString(string: flag, attributes: attributes)
+
+        let measured = attributed.boundingRect(
+            with: NSSize(width: 64, height: 64),
+            options: [.usesLineFragmentOrigin, .usesFontLeading]
+        ).integral
+
+        let image = NSImage(size: NSSize(width: canvas, height: canvas), flipped: false) { rect in
+            // Оптический центр. Небольшой +0.5 pt по Y компенсирует метрики Apple Color Emoji
+            // и визуально выравнивает флаг с SF Symbols / template icons в строке меню.
+            let origin = NSPoint(
+                x: floor((rect.width - measured.width) / 2 - measured.minX),
+                y: floor((rect.height - measured.height) / 2 - measured.minY) + 0.5
+            )
+            attributed.draw(at: origin)
+            return true
+        }
+        image.isTemplate = false
+        flagImageCache[cacheKey] = image
         return image
     }
 
