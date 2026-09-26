@@ -73,6 +73,7 @@ enum L10n {
     static var menuRemoteDesktop: String { s("menu.remoteDesktop") }
     static var menuCaretFlag: String { s("menu.caretFlag") }
     static var menuMonoIcon: String { s("menu.monoIcon") }
+    static var menuFlagSize: String { s("menu.flagSize") }
     static var settingsSwitchHotkey: String { s("settings.switchHotkey") }
     static var settingsCaseHotkey: String { s("settings.caseHotkey") }
     static var settingsSwitchHotkeyOff: String { s("settings.switchHotkey.off") }
@@ -216,6 +217,7 @@ enum L10n {
             "menu.keySound": "Layout sound (beta)",
             "menu.caretFlag": "Flag at cursor (beta)",
             "menu.monoIcon": "Monochrome icon",
+            "menu.flagSize": "Flag size",
             "settings.switchHotkey": "Layout switch hotkey",
             "settings.caseHotkey": "Change-case hotkey",
             "settings.switchHotkey.off": "Off",
@@ -334,6 +336,7 @@ enum L10n {
             "menu.keySound": "Звук раскладки (бета)",
             "menu.caretFlag": "Флаг у курсора (бета)",
             "menu.monoIcon": "Монохромная иконка",
+            "menu.flagSize": "Размер флага",
             "settings.switchHotkey": "Хоткей смены раскладки",
             "settings.caseHotkey": "Хоткей смены регистра",
             "settings.switchHotkey.off": "Выключен",
