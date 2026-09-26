@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feature/configurable-flag-size
+      - fix/emoji-baseline-centering
   workflow_dispatch:
 
 jobs:
